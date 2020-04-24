@@ -5,7 +5,7 @@ import pickle
 
 
 class listener:
-	def __init__(self, sp):
+	def __init__(self, sp, device_id):
 		self.device_id = device_id
 		self.sp = sp
 		self.song_graph = self.load_graph()
@@ -15,7 +15,7 @@ class listener:
 		'''
 		Takes in a song_uri and plays it
 		'''
-		sp.start_playback(device_id=self.device_id,uris=[track_uri])
+		self.sp.start_playback(device_id=self.device_id,uris=[track_uri])
 
 
 	def load_graph(self):
@@ -23,7 +23,7 @@ class listener:
 		Loads the current copy of the song graph
 		'''
 		try:
-			with open('song_map.pickle', 'rb') as fd:
+			with open('../disk/song_map.pickle', 'rb') as fd:
 				graph = pickle.load(fd)
 			return graph
 		except:
@@ -34,39 +34,39 @@ class listener:
 		'''
 		Writes a current copy of the song graph as a pickle file
 		'''
-		with open('song_map.pickle', 'wb') as fd:
+		with open('../../song_map.pickle', 'wb') as fd:
 			pickle.dump(self.song_graph, fd)
 
 	def add_to_queue(self, track_uri):
 		'''
 		Given a song, add it to the queue
 		'''
-		sp.add_to_queue(track_uri, self.device_id)
+		self.sp.add_to_queue(track_uri, self.device_id)
 		self.queue.append(track_uri)
 
 	def search_song(self, search_str):
 		'''
 		Searches a song, returns the song record
 		'''
-		res = sp.search(search_str)
+		res = self.sp.search(search_str)
 		return res['tracks']['items'][0]
 
 	def get_current_song_uri(self):
 		'''
 		Returns the uri of the song that's currently playing
 		'''
-		res = sp.current_user_playing_track()
+		res = self.sp.current_user_playing_track()
 		song_uri = res['item']['uri']
 		return song_uri
 		
-	def update_graph(self):
+	def update_graph(self, current_song):
 		'''
 		Creates links between the current song, and songs added in the queue
 		Should be called at some well defined interval. For now we'll make it manual
 		In future it is run on song changeover
 		'''
 
-		root = self.get_current_song_uri()
+		root = current_song
 		vertices = [root] + [leaf for leaf in self.queue]
 		
 		for i in vertices:
@@ -81,8 +81,7 @@ class listener:
 					self.song_graph[i] = [j]
 
 		# Clear the current queue
-		self.queue = []		
-		pprint(self.song_graph)		
+		self.queue = []	
 
 		
 	def process_and_add(self, search_str):
