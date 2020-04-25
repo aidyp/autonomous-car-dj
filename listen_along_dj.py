@@ -1,9 +1,21 @@
+#!/usr/bin/env python3
+
 import threading
 from listen.listener import *
 from api_functions.misc_functions import get_device_by_name
 import sys
 
 
+
+def save_song_graph(args):
+	'''
+	The listener DJ usually only saves the song_graph on quit. This is just to make sure it does it a little more often
+	'''
+	listener = args[0]
+	listener.write_graph()
+	t = threading.Timer(60.0, save_song_graph, args=(args,))
+	t.daemon=True
+	t.start()
 
 def check_song_change(args):
 	'''
@@ -30,24 +42,42 @@ def check_song_change(args):
 	t = threading.Timer(15.0, check_song_change, args=(args,))
 	t.daemon=True #song change thread should be subservient to main thread
 	t.start()
-	return
-	
+
+
+def command_switchboard(command, listener, song_state):
+	'''
+	Run if a command is entered prepended by '_'
+	'''
+	if command == 'quit':
+		listener.update_graph(song_state)
+		listener.write_graph()
+		sys.exit()
+	elif command == 'skip':
+		listener.skip_song()
+	else:
+		print("Command not recognised, sorry!")
+
 def listen_along_dj(listener):
 	'''
 	Control loop for the listen along DJ. 
 	'''
 	quit = 0
 	song_state = listener.get_current_song_uri()
-	# Start a timer
+	
+
+	# Start timers
 	check_song_change([listener, song_state])
+	save_song_graph([listener])
+	
 	while quit < 1:
 		inp = input("Search for a song to add it to your queue: ")
-		
-		if inp == 'quit':
-			listener.write_graph()
-			sys.exit()
+		if inp[0] == '_':
+			# Process a command
+			command_switchboard(inp[1:], listener, song_state)
 		else:
-			listener.process_and_add(inp)
+			r = listener.process_and_add(inp)
+			if r == 0:
+				print("Sorry, couldn't add that song - try searching again")
 
 def initialise():
 	scope = 'user-read-playback-state,user-modify-playback-state'
@@ -56,6 +86,9 @@ def initialise():
 	listen = listener(sp, device_id)
 	return listen
 
-if __name__ == '__main__':
+def main():
 	listen = initialise()
 	listen_along_dj(listen)
+
+if __name__ == '__main__':
+	main()

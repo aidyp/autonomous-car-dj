@@ -17,13 +17,24 @@ class listener:
 		'''
 		self.sp.start_playback(device_id=self.device_id,uris=[track_uri])
 
+	def clear_queue(self):
+		'''
+		Clears the current song queue
+		'''
+		
 
+	def queue_track(self, track_uri):
+		'''
+		Queuing function for playback without listening
+		'''
+		self.sp.add_to_queue(track_uri, self.device_id)		
+	
 	def load_graph(self):
 		'''
 		Loads the current copy of the song graph
 		'''
 		try:
-			with open('../disk/song_map.pickle', 'rb') as fd:
+			with open('disk/song_map.pickle', 'rb') as fd:
 				graph = pickle.load(fd)
 			return graph
 		except:
@@ -34,7 +45,7 @@ class listener:
 		'''
 		Writes a current copy of the song graph as a pickle file
 		'''
-		with open('../../song_map.pickle', 'wb') as fd:
+		with open('disk/song_map.pickle', 'wb') as fd:
 			pickle.dump(self.song_graph, fd)
 
 	def add_to_queue(self, track_uri):
@@ -44,12 +55,21 @@ class listener:
 		self.sp.add_to_queue(track_uri, self.device_id)
 		self.queue.append(track_uri)
 
+	def skip_song(self):
+		'''
+		Skips to the next song
+		'''
+		self.sp.next_track(self.device_id)
+
 	def search_song(self, search_str):
 		'''
-		Searches a song, returns the song record
+		Searches a song, returns the song record. Returns None on failure
 		'''
 		res = self.sp.search(search_str)
-		return res['tracks']['items'][0]
+		try:
+			return res['tracks']['items'][0]
+		except:
+			return 0
 
 	def get_current_song_uri(self):
 		'''
@@ -89,14 +109,20 @@ class listener:
 		Manages the end-to-end process of searching a song and getting it played
 		'''
 		song_record = self.search_song(search_str)
+
+		# Failed searches return None
+		if song_record == 0:
+			return 0
 		
 		# Code to add to the graph goes here
 
 		self.add_to_queue(song_record['uri'])
 		
-		# Echo to console
+		# Echo the song name and artist to console //todo
 		song_name = song_record['name']
-		print("Added " + song_name + " to the queue!")
+		song_artist = song_record['album']['artists'][0]['name']
+		print("Added " + song_name + " - " + song_artist + " to the queue!")
+		return 1
 
 	def listen(self):
 		print("I'm listening!")
