@@ -7,8 +7,8 @@ Loads the song graph and gets going!
 import pickle
 from listen.listener import *
 from graph_logic.graph_playlist import generate_playlist
-from api_functions.misc_functions import get_device_by_name
 import listen_along_dj as ldj
+import api_functions.misc_functions as sapi
 
 
 def load_graph():
@@ -21,7 +21,7 @@ def autonomous_car_dj(listener, song_graph):
 	Creates a walk along the song graph and queues up the songs
 	'''
 
-	playlist = generate_playlist(song_graph, 6)
+	playlist = generate_playlist(song_graph, 10)
 	
 	# Play the first song, queue the rest
 	listener.play_track(playlist[0])
@@ -31,12 +31,11 @@ def autonomous_car_dj(listener, song_graph):
 	
 
 	# Start a listen along DJ
-	ldj.main()
+	ldj.listen_along_dj(listener)
 
 def initialise_listener():
-	scope = 'user-read-playback-state,user-modify-playback-state'
-	sp = spotipy.Spotify(client_credentials_manager=SpotifyOAuth(scope=scope,username='jokezfish'))
-	device_id = get_device_by_name('kanga', sp)
+	sp = sapi.create_sp()
+	device_id = sapi.choose_device(sp)
 	listen = listener(sp, device_id)
 	return listen
 

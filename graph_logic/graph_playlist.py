@@ -7,13 +7,12 @@ import pickle
 SNAPBACK = 3
 
 
-sample_graph = {'A':['B', 'C'],
-                'B':['A', 'C', 'D', 'E'],
-                'C':['A', 'B', 'F'],
-                'D':['B', 'E'],
-                'E':['B', 'D'],
-                'F':['C']}
-
+sample_disjoint_graph = {'A':['B','C'],
+                         'B':['A','C'],
+                         'C':['B','C'],
+                         'D':['E','F'],
+                         'E':['D','F'],
+                         'F':['D','E']}
 
 def load_graph():
 	with open('../disk/song_map.pickle', 'rb') as fd:
@@ -28,7 +27,11 @@ def get_vertices(graph):
 	return [k for k in graph.keys()]
 
 def dfs_adjusted(graph, node, visited, length):
+	'''
+	Does a depth first walk up to some pre defined length
 
+	TODO: If it finishes a chain it seems to jump to another one
+	'''
 	if len(visited) == length:
 		# Stop the walk
 		return
@@ -39,10 +42,32 @@ def dfs_adjusted(graph, node, visited, length):
 		# shuffle neighbours for some variance
 		random.shuffle(neighbours)
 		for neighbour in neighbours:
-
 			# Need to think where to add snapback			
 			dfs_adjusted(graph, neighbour, visited, length)
 		
+
+def bfs_adjusted(graph, node, visited, length):
+	'''
+	Does a breadth first walk up to some pre-defined length
+	'''
+	queue = []
+
+	visited.append(node)
+	queue.append(node)
+
+	while queue:
+		s = queue.pop(0)
+		neighbours = graph[s]
+		random.shuffle(neighbours) # Shuffle neighbours for some variance
+		for neighbour in neighbours:
+			if len(visited) == length:
+				# Stop the walk
+				return
+			if neighbour not in visited:
+				visited.append(neighbour)
+				queue.append(neighbour)
+			
+
 def pick_first_song(vertices):
 	'''
 	Give a list vertices, picks a random element
@@ -69,6 +94,14 @@ def generate_playlist(song_graph, length):
 	
 	return playlist
 
+def tests():
+	visited = walk_graph('D', sample_disjoint_graph, 5)
+	print(visited)
 	
+
+
+
+if __name__ == '__main__':
+	tests()
 	
 

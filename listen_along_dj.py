@@ -2,7 +2,7 @@
 
 import threading
 from listen.listener import *
-from api_functions.misc_functions import get_device_by_name
+import api_functions.misc_functions as sapi
 import sys
 
 
@@ -19,10 +19,7 @@ def save_song_graph(args):
 
 def check_song_change(args):
 	'''
-	Checks if the player has moved on from the current song state
-	song_state comes in as uri
-
-	If there has been a song change, it will update the song graph
+	Periodically checks if the song has changed. If it has, runs the update code
 	'''
 
 	# Unpack the arguments
@@ -54,6 +51,9 @@ def command_switchboard(command, listener, song_state):
 		sys.exit()
 	elif command == 'skip':
 		listener.skip_song()
+		listener.update_graph(song_state)
+	elif command == 'undo':
+		listener.pop_queue()
 	else:
 		print("Command not recognised, sorry!")
 
@@ -71,18 +71,21 @@ def listen_along_dj(listener):
 	
 	while quit < 1:
 		inp = input("Search for a song to add it to your queue: ")
-		if inp[0] == '_':
-			# Process a command
-			command_switchboard(inp[1:], listener, song_state)
-		else:
-			r = listener.process_and_add(inp)
-			if r == 0:
-				print("Sorry, couldn't add that song - try searching again")
+		try:
+			if inp[0] == '_':
+				# Process a command
+				command_switchboard(inp[1:], listener, song_state)
+			else:
+				r = listener.process_and_add(inp)
+				if r == 0:
+					print("Sorry, couldn't add that song - try searching again")
+		except IndexError:
+			# Just pressing enter should reset the scheme
+			continue
 
 def initialise():
-	scope = 'user-read-playback-state,user-modify-playback-state'
-	sp = spotipy.Spotify(client_credentials_manager=SpotifyOAuth(scope=scope,username='jokezfish'))
-	device_id = get_device_by_name('kanga', sp)
+	sp = sapi.create_sp()
+	device_id = sapi.choose_device(sp)
 	listen = listener(sp, device_id)
 	return listen
 
