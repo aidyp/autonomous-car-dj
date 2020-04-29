@@ -1,6 +1,4 @@
-'''
-Some helper functions to edit connections, delete songs, add connections manually to one's music graph
-'''
+#!/usr/bin/env python3
 
 import pickle
 from listen.listener import listener
@@ -110,17 +108,17 @@ def get_uri_name(songs, listener):
 	for song in songs:
 		song_record = listener.search_song(song)
 
-	# Check something was returned
-	if song_record == None:
-		return None
+		# Check something was returned
+		if song_record == None:
+			return None
 
-	song_uri = song_record['uri']
-	song_name = listener.get_pretty_name_by_uri(song_uri)
-	uri_name.append([song_uri, song_name])
+		song_name = listener.pretty_name(song_record)
+		song_uri = song_record['uri']
+		uri_name.append([song_uri, song_name])
 
 	# Check correctness
-	for elem in range(0, len(uri_name)):
-		print(uri_name[1])
+	for elem in uri_name:
+		print(elem[1])
 	if okay_to_continue() == False:
 		return None
 
@@ -163,10 +161,10 @@ def delete(body, listener, graph_editor):
 	# Error checking
 	if uri_name == None:
 		return None
-	uri = uri_name[0]
+	uri = uri_name[0][0]
 	graph_editor.delete_song(uri)
 
-def save(listener):
+def save_changes(listener):
 	listener.write_graph()
 
 def show_network(listener, graph_editor):
@@ -177,8 +175,9 @@ def show_network(listener, graph_editor):
 	uris = graph_editor.get_all_uris()
 	mapping = {}
 	for uri in uris:
-		mapping[uri] = listener.get_pretty_name_by_uri(uri)
-	print(mapping)
+		song_record = listener.get_song_record_by_uri(uri)
+		full_name = listener.pretty_name(song_record)
+		mapping[uri] = full_name
 	graph_editor.visualise(mapping)
 
 def command_parse(user_input, listener, graph_editor):
@@ -202,7 +201,9 @@ def command_parse(user_input, listener, graph_editor):
 		# Loads the visualiser (note this is blocking!)
 		# Don't use yet, need to restructur the visualiser
 		show_network(listener, graph_editor)
-
+	elif cmd == 'quit':
+		return False
+	return True
 
 def control_loop(listener, graph_editor):
 	
@@ -220,9 +221,10 @@ def initialise():
 
 	# Initialise the graph editor
 	graph_edit = graph_editor(song_graph)
-	
 
-	control_loop(listener, graph_edit)
+	repeat = True
+	while repeat:
+		repeat = control_loop(listen, graph_edit)
 
 
 def main():

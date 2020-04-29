@@ -29,33 +29,43 @@ class listener:
 		if song_uri not in self.song_cache:
 			self.song_cache['ADDED'].append(song_uri)
 			self.song_cache[song_uri] = song_record
-		
-		
+
+
 		# Trim the cache if it's too long
 		if len(self.song_cache['ADDED']) > 10:
 			# pops the first entry from the cache
 			to_delete = self.song_cache['ADDED'].pop(0)
 			del self.song_cache[to_delete]
-		
+
 	def get_song_record_by_uri(self, song_uri):
 		'''
 		Returns a full song record by the song_uri
 		'''
-		
+
 		# Check if it's in the cache
 		try:
 			record = self.song_cache[song_uri]
 		except:
-			record = None
-		
-		if record == None:
-			pass
+			record = self.sp.track(song_uri)
 
-	def clear_queue(self):
+		# If it's not in the cache, will have to search for it
+		if record == None:
+			return None
+		return record
+
+	def clear_spotify_queue(self):
 		'''
-		Clears the current song queue
+		Clears the current song queue. Doesn't work ):
 		'''
-	
+		# Turns out the spotify API has no clean way of doing this, the best trick is to
+		# 1) find a playlist that has exactly zero songs
+		# 2) play it
+		# 3) skip it
+		wipe = 'spotify:track:5sKN6nGLcbfveIVEoejeoC'
+		print("Trying to clear the queue")
+		self.sp.start_playback(device_id=self.device_id, uris=[wipe])
+
+
 	def pop_queue(self):
 		'''
 		Removes the last track from the mapping queue
@@ -65,14 +75,14 @@ class listener:
 		song_record = self.song_cache[removed]
 		to_print = self.pretty_name(song_record)
 		print(to_print + " removed from the adding queue (but not the song queue)")
-		
+
 
 	def queue_track(self, track_uri):
 		'''
 		Queuing function for playback without listening
 		'''
-		self.sp.add_to_queue(track_uri, self.device_id)		
-	
+		self.sp.add_to_queue(track_uri, self.device_id)
+
 	def load_graph(self):
 		'''
 		Loads the current copy of the song graph
@@ -91,6 +101,12 @@ class listener:
 		'''
 		with open('disk/song_map.pickle', 'wb') as fd:
 			pickle.dump(self.song_graph, fd)
+
+	def get_graph(self):
+		'''
+		Returns a reference to the graph object
+		'''
+		return self.song_graph
 
 	def add_to_queue(self, track_uri):
 		'''
@@ -111,9 +127,14 @@ class listener:
 		'''
 		res = self.sp.search(search_str)
 		try:
-			return res['tracks']['items'][0]
+			song_record = res['tracks']['items'][0]
+
+			# Cache the record before returning
+			self.add_to_cache(song_record)
+
+			return song_record
 		except:
-			return 0
+			return None
 
 	def get_current_song_uri(self):
 		'''
@@ -126,7 +147,8 @@ class listener:
 		'''
 		Returns the current user's music queue as a list
 		'''
-		
+		pass
+
 	def update_graph(self, current_song):
 		'''
 		Creates links between the current song, and songs added in the queue
@@ -136,12 +158,12 @@ class listener:
 
 		root = current_song
 		vertices = [root] + [leaf for leaf in self.queue]
-		
+
 		for i in vertices:
 			for j in vertices:
 				if i == j:
 					continue
-				
+
 				if i in self.song_graph:
 					if j not in self.song_graph[i]:
 						self.song_graph[i].append(j)
@@ -149,7 +171,7 @@ class listener:
 					self.song_graph[i] = [j]
 
 		# Clear the current queue
-		self.queue = []	
+		self.queue = []
 
 	def pretty_name(self, song_record):
 		'''
@@ -157,7 +179,7 @@ class listener:
 		'''
 		song_name = song_record['name']
 		song_artist = song_record['album']['artists'][0]['name']
-		return (song_name + ' - ' + song_artist)	
+		return (song_name + ' - ' + song_artist)
 
 	def process_and_add(self, search_str):
 		'''
@@ -168,21 +190,19 @@ class listener:
 		# Failed searches return None
 		if song_record == 0:
 			return 0
-		
+
 		# Add to the song queue
 		self.add_to_queue(song_record['uri'])
 
-		# Cache the record
-		self.add_to_cache(song_record)
-		
+
 		# Echo the song name and artist to console
 		to_print = self.pretty_name(song_record)
 		print("Added " + to_print + " to the queue!")
 		return 1
-			
+
 
 if __name__ == '__main__':
-	
+
 	# Authorise
 	scope = 'user-read-playback-state,user-modify-playback-state'
 	sp = spotipy.Spotify(client_credentials_manager=SpotifyOAuth(scope=scope,username='jokezfish'))
@@ -194,4 +214,3 @@ if __name__ == '__main__':
 	# Initialise the listener
 	listen = listener(sp)
 	listen.listen()
-	

@@ -16,22 +16,39 @@ def load_graph():
 		graph = pickle.load(fd)
 	return graph
 
+def search_for_song(song, listener, song_graph):
+	song_uri = listener.search_song(song)['uri']
+	if song_uri in song_graph:
+		return song_uri
+	else:
+		print("Can't find that one, picking for you!")
+		return None
+
 def autonomous_car_dj(listener, song_graph):
 	'''
 	Creates a walk along the song graph and queues up the songs
 	'''
 
-	playlist = generate_playlist(song_graph, 10)
-	
+	# First clear the queue (doesn't work)
+	#listener.clear_spotify_queue()
+
+	# Ask if the user has a song they want to start with
+	inp = input("What song do you want to start with? ")
+	first_song = search_for_song(inp, listener, song_graph)
+
+	playlist = generate_playlist(first_song, song_graph, 10)
+
 	# Play the first song, queue the rest
 	listener.play_track(playlist[0])
-	
+
 	for track in playlist[1:]:
 		listener.queue_track(track)
-	
 
-	# Start a listen along DJ
-	ldj.listen_along_dj(listener)
+
+	inp = input("Want to drop into the listener? (y/n): ")
+	if inp == 'y':
+		# Start a listen along DJ if the user wants
+		ldj.listen_along_dj(listener)
 
 def initialise_listener():
 	sp = sapi.create_sp()

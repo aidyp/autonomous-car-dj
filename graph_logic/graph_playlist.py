@@ -42,9 +42,9 @@ def dfs_adjusted(graph, node, visited, length):
 		# shuffle neighbours for some variance
 		random.shuffle(neighbours)
 		for neighbour in neighbours:
-			# Need to think where to add snapback			
+			# Need to think where to add snapback
 			dfs_adjusted(graph, neighbour, visited, length)
-		
+
 
 def bfs_adjusted(graph, node, visited, length):
 	'''
@@ -66,7 +66,7 @@ def bfs_adjusted(graph, node, visited, length):
 			if neighbour not in visited:
 				visited.append(neighbour)
 				queue.append(neighbour)
-			
+
 
 def pick_first_song(vertices):
 	'''
@@ -80,28 +80,27 @@ def walk_graph(root, song_graph, length):
 	dfs_adjusted(song_graph, root, visited, length)
 	return visited
 
-def generate_playlist(song_graph, length):
+def generate_playlist(first_song, song_graph, length):
 	'''
 	Given a song graph, returns a playlist that is a walk along the graph
 	'''
-	
-	# Pick the first song
-	v = get_vertices(song_graph)
-	root = pick_first_song(v)
+	if first_song == None:
+        	v = get_vertices(song_graph)
+        	root = pick_first_song(v)
+	else:
+		root = first_song
 
 	# Generate a playlist
 	playlist = walk_graph(root, song_graph, length)
-	
+
 	return playlist
 
 def tests():
 	visited = walk_graph('D', sample_disjoint_graph, 5)
 	print(visited)
-	
+
 
 
 
 if __name__ == '__main__':
 	tests()
-	
-

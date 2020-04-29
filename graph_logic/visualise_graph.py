@@ -42,27 +42,26 @@ def create_uri_mapping(mapping, song_graph):
 	for song_uri in song_graph.keys():
 		pretty_name = get_pretty_name_by_uri(song_uri)
 		mapping[song_uri] = pretty_name
-		
 
-def visualise_song_graph():
-	
-	# Make the pretty song map
-	song_graph = load_song_graph()
-	uri_map = {}
+
+def visualise_song_graph(song_graph, uri_map):
+
+	# Make the pretty song map if it doesn't exist already
+	# Usually invoked if this is run as main
+	if uri_map == None:
+		uri_map = {}
 	create_uri_mapping(uri_map, song_graph)
-	
+
 	# Transform the graph
 	G = nx.Graph(song_graph)
 	H = nx.relabel_nodes(G, uri_map)
 
 	# Visualise
 	visualize(H)
-		
+
 def main():
-	visualise_song_graph()
-	
+	song_graph = load_song_graph()
+	visualise_song_graph(song_graph)
+
 if __name__ == '__main__':
-	main()	
-
-	
-
+	main()

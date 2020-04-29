@@ -21,7 +21,8 @@ def choose_device(sp):
 	device_id = None
 	while device_id == None:
 		inp = input("Choose device by number: ")
-		device_id = get_device_by_name(device_map[i], devices)
+		choice = int(inp)
+		device_id = get_device_by_name(device_map[choice], devices)
 	
 	return device_id
 
