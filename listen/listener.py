@@ -82,6 +82,7 @@ class listener:
 		Queuing function for playback without listening
 		'''
 		self.sp.add_to_queue(track_uri, self.device_id)
+		#self.add_to_cache(self.get_song_record_by_uri(track_uri))
 
 	def load_graph(self):
 		'''
@@ -139,6 +140,7 @@ class listener:
 	def get_current_song_uri(self):
 		'''
 		Returns the uri of the song that's currently playing
+		Extend to return the pretty name as well
 		'''
 		res = self.sp.current_user_playing_track()
 		song_uri = res['item']['uri']
@@ -180,7 +182,13 @@ class listener:
 		song_name = song_record['name']
 		song_artist = song_record['album']['artists'][0]['name']
 		return (song_name + ' - ' + song_artist)
-
+	def pretty_name_by_uri(self, uri):
+		'''
+		Gets the nice name from the uri
+		'''
+		record = self.get_song_record_by_uri(uri)
+		return self.pretty_name(record)
+		
 	def process_and_add(self, search_str):
 		'''
 		Manages the end-to-end process of searching a song and getting it played

@@ -24,6 +24,14 @@ def search_for_song(song, listener, song_graph):
 		print("Can't find that one, picking for you!")
 		return None
 
+def pretty_print_queue(play_queue, listener):
+	'''
+	Pretty prints to the queue
+	'''
+	print("Now playing, ")
+	for i in range(0, len(play_queue)):
+		print(str(i + 1) + "] " + listener.pretty_name_by_uri(play_queue[i]))
+
 def autonomous_car_dj(listener, song_graph):
 	'''
 	Creates a walk along the song graph and queues up the songs
@@ -33,7 +41,7 @@ def autonomous_car_dj(listener, song_graph):
 	#listener.clear_spotify_queue()
 
 	# Ask if the user has a song they want to start with
-	inp = input("What song do you want to start with? ")
+	inp = input("What song do you want to start with? (r for random): ")
 	first_song = search_for_song(inp, listener, song_graph)
 
 	playlist = generate_playlist(first_song, song_graph, 10)
@@ -44,7 +52,7 @@ def autonomous_car_dj(listener, song_graph):
 	for track in playlist[1:]:
 		listener.queue_track(track)
 
-
+	#pretty_print_queue(playlist, listener)
 	inp = input("Want to drop into the listener? (y/n): ")
 	if inp == 'y':
 		# Start a listen along DJ if the user wants
